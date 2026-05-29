@@ -31,7 +31,9 @@
 #define FSR3UPSCALER_BIND_UAV_SPD_MIPS_LEVEL_3                5
 #define FSR3UPSCALER_BIND_UAV_SPD_MIPS_LEVEL_4                6
 #define FSR3UPSCALER_BIND_UAV_SPD_MIPS_LEVEL_5                7
-#define FSR3UPSCALER_BIND_UAV_FARTHEST_DEPTH_MIP1             8
+// D3D11 FL11.0 supports only 8 UAV slots (u0-u7). SPD mip levels 0-4 compile to LDS
+// in the FFX_SPD_NO_WAVE_OPERATIONS path, so u2 is free in the compiled bytecode.
+#define FSR3UPSCALER_BIND_UAV_FARTHEST_DEPTH_MIP1             2
 
 
 #define FSR3UPSCALER_BIND_CB_FSR3UPSCALER                     0

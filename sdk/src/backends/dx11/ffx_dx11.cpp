@@ -29,6 +29,18 @@
 #include <../src/backends/shared/ffx_shader_blobs.h>
 #include <codecvt>  // convert string to wstring
 #include <mutex>
+#include <fstream>
+#include <cstdarg>
+
+static void LogDebug(const char* format, ...) {
+    char buffer[1024];
+    va_list args;
+    va_start(args, format);
+    vsprintf_s(buffer, format, args);
+    va_end(args);
+    std::ofstream logFile("D:\\Games\\TES - Skyrim - Anniversary Edition\\fsr3_dx11_debug.log", std::ios_base::app);
+    logFile << buffer << std::endl;
+}
 
 extern "C" void CalculateDXBCChecksum(const DWORD* pData, DWORD dwSize, DWORD dwHash[4]);
 
@@ -228,13 +240,17 @@ static DXGI_FORMAT convertFormatUav(DXGI_FORMAT format)
         // Handle Depth
         case DXGI_FORMAT_R32G8X24_TYPELESS:
         case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+        case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
             return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+        case DXGI_FORMAT_R32_TYPELESS:
         case DXGI_FORMAT_D32_FLOAT:
             return DXGI_FORMAT_R32_FLOAT;
         case DXGI_FORMAT_R24G8_TYPELESS:
+        case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
         case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
         case DXGI_FORMAT_D24_UNORM_S8_UINT:
             return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+        case DXGI_FORMAT_R16_TYPELESS:
         case DXGI_FORMAT_D16_UNORM:
             return DXGI_FORMAT_R16_UNORM;
 
@@ -258,12 +274,8 @@ static DXGI_FORMAT convertFormatUav(DXGI_FORMAT format)
             return DXGI_FORMAT_B8G8R8A8_UNORM;
         case DXGI_FORMAT_B8G8R8X8_TYPELESS:
             return DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
-        case DXGI_FORMAT_R32_TYPELESS:
-            return DXGI_FORMAT_R32_FLOAT;
         case DXGI_FORMAT_R8G8_TYPELESS:
             return DXGI_FORMAT_R8G8_UNORM;
-        case DXGI_FORMAT_R16_TYPELESS:
-            return DXGI_FORMAT_R16_FLOAT;
         case DXGI_FORMAT_R8_TYPELESS:
             return DXGI_FORMAT_R8_UNORM;
         default:
@@ -276,27 +288,48 @@ static DXGI_FORMAT convertFormatSrv(DXGI_FORMAT format)
 {
     switch (format) {
         // Handle Depth
-    case DXGI_FORMAT_R32G8X24_TYPELESS:
-    case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
-        return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
-    case DXGI_FORMAT_D32_FLOAT:
-        return DXGI_FORMAT_R32_FLOAT;
-    case DXGI_FORMAT_R24G8_TYPELESS:
-    case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
-    case DXGI_FORMAT_D24_UNORM_S8_UINT:
-        return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-    case DXGI_FORMAT_D16_UNORM:
-        return DXGI_FORMAT_R16_UNORM;
+        case DXGI_FORMAT_R32G8X24_TYPELESS:
+        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+        case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+            return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+        case DXGI_FORMAT_R32_TYPELESS:
+        case DXGI_FORMAT_D32_FLOAT:
+            return DXGI_FORMAT_R32_FLOAT;
+        case DXGI_FORMAT_R24G8_TYPELESS:
+        case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+        case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:
+            return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+        case DXGI_FORMAT_R16_TYPELESS:
+        case DXGI_FORMAT_D16_UNORM:
+            return DXGI_FORMAT_R16_UNORM;
 
-        // Handle Color
-    case DXGI_FORMAT_B8G8R8A8_TYPELESS:
-        return DXGI_FORMAT_B8G8R8A8_UNORM;
-    case DXGI_FORMAT_R8G8B8A8_TYPELESS:
-        return DXGI_FORMAT_R8G8B8A8_UNORM;
-
-        // Colors can map as is
-    default:
-        return format;
+        // Handle color: assume FLOAT for 16 and 32 bit channels, else UNORM
+        case DXGI_FORMAT_R32G32B32A32_TYPELESS:
+            return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        case DXGI_FORMAT_R32G32B32_TYPELESS:
+            return DXGI_FORMAT_R32G32B32_FLOAT;
+        case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+            return DXGI_FORMAT_R16G16B16A16_FLOAT;
+        case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+            return DXGI_FORMAT_R8G8B8A8_UNORM;
+        case DXGI_FORMAT_R32G32_TYPELESS:
+            return DXGI_FORMAT_R32G32_FLOAT;
+        case DXGI_FORMAT_R16G16_TYPELESS:
+            return DXGI_FORMAT_R16G16_FLOAT;
+        case DXGI_FORMAT_R10G10B10A2_TYPELESS:
+            return DXGI_FORMAT_R10G10B10A2_UNORM;
+        case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+            return DXGI_FORMAT_B8G8R8A8_UNORM;
+        case DXGI_FORMAT_B8G8R8X8_TYPELESS:
+            return DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
+        case DXGI_FORMAT_R8G8_TYPELESS:
+            return DXGI_FORMAT_R8G8_UNORM;
+        case DXGI_FORMAT_R8_TYPELESS:
+            return DXGI_FORMAT_R8_UNORM;
+        default:
+            return format;
     }
 }
 
@@ -537,7 +570,11 @@ bool IsDepthDX11(DXGI_FORMAT format)
     return (format == DXGI_FORMAT_D16_UNORM) || 
            (format == DXGI_FORMAT_D32_FLOAT) || 
            (format == DXGI_FORMAT_D24_UNORM_S8_UINT) ||
-           (format == DXGI_FORMAT_D32_FLOAT_S8X24_UINT);
+           (format == DXGI_FORMAT_D32_FLOAT_S8X24_UINT) ||
+           (format == DXGI_FORMAT_R24G8_TYPELESS) ||
+           (format == DXGI_FORMAT_R32_TYPELESS) ||
+           (format == DXGI_FORMAT_R16_TYPELESS) ||
+           (format == DXGI_FORMAT_R32G8X24_TYPELESS);
 }
 
 FfxResourceDescription GetFfxResourceDescriptionDX11(ID3D11Resource* pResource)
@@ -756,6 +793,10 @@ FfxErrorCode GetDeviceCapabilitiesDX11(FfxInterface* backendInterface, FfxDevice
     FFX_ASSERT(NULL != backendInterface);
     FFX_ASSERT(NULL != backendInterface->device);
     FFX_ASSERT(NULL != deviceCapabilities);
+    
+    // Zero-initialize the capabilities struct to clear stack garbage
+    memset(deviceCapabilities, 0, sizeof(FfxDeviceCapabilities));
+
     ID3D11Device* dx11Device = reinterpret_cast<ID3D11Device*>(backendInterface->device);
 
     // Check if we have shader model 6.6
@@ -786,12 +827,8 @@ FfxErrorCode GetDeviceCapabilitiesDX11(FfxInterface* backendInterface, FfxDevice
         break;
     }
 
-    // check if we have 16bit floating point.
-    D3D11_FEATURE_DATA_SHADER_MIN_PRECISION_SUPPORT d3d11Options = {};
-    if (SUCCEEDED(dx11Device->CheckFeatureSupport(D3D11_FEATURE_SHADER_MIN_PRECISION_SUPPORT, &d3d11Options, sizeof(d3d11Options)))) {
-
-        deviceCapabilities->fp16Supported = (d3d11Options.AllOtherShaderStagesMinPrecision != 0);
-    }
+    // DX11 compute shaders compiled for SM 5.0 do not support native FP16 math permutations.
+    deviceCapabilities->fp16Supported = false;
 
     return FFX_OK;
 }
@@ -1537,11 +1574,15 @@ FfxErrorCode CreatePipelineDX11(
             wcscpy_s(outPipeline->constantBufferBindings[cbIndex].name, converter.from_bytes(shaderBlob.boundConstantBufferNames[cbIndex]).c_str());
         }
 
+        // test the original shader data
+        // HRESULT hr_orig = dx11Device->CreateComputeShader(shaderBlob.data, shaderBlob.size, nullptr, nullptr);
+
         // patch GroupMemoryBarrier to GroupMemoryBarrierWithGroupSync
         DWORD* data = new DWORD[shaderBlob.size / sizeof(DWORD)];
         if (data == nullptr)
             return FFX_ERROR_INSUFFICIENT_MEMORY;
         memcpy(data, shaderBlob.data, shaderBlob.size);
+        bool hash_recalculated = false;
         for (uint32_t i = 0; i < shaderBlob.size / sizeof(DWORD); ++i)
         {
             if (data[i] == MAKEFOURCC('S','H','E','X'))
@@ -1560,13 +1601,17 @@ FfxErrorCode CreatePipelineDX11(
                 if (hash)
                 {
                     CalculateDXBCChecksum(data, shaderBlob.size, &data[1]);
+                    hash_recalculated = true;
                 }
                 break;
             }
         }
 
         // create the PSO
-        if (FAILED(dx11Device->CreateComputeShader(data, shaderBlob.size, nullptr, (ID3D11ComputeShader**)&outPipeline->pipeline)))
+        HRESULT hr_patched = dx11Device->CreateComputeShader(data, shaderBlob.size, nullptr, (ID3D11ComputeShader**)&outPipeline->pipeline);
+        // LogDebug("CreateComputeShader for %S (Pass %d, Permutation 0x%X): size=%d, Original_HR=0x%08X, Patched_HR=0x%08X, HashRecalculated=%d", 
+        //          pipelineDescription->name, pass, permutationOptions, shaderBlob.size, hr_orig, hr_patched, hash_recalculated);
+        if (FAILED(hr_patched))
         {
             delete[] data;
             return FFX_ERROR_BACKEND_API_ERROR;
