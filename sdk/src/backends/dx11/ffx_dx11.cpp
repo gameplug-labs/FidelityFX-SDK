@@ -216,7 +216,7 @@ static void SetNameDX11(ID3D11DeviceChild* resource, wchar_t const* name)
     }
 }
 
-static void TIF(HRESULT result)
+static void TIF_impl(HRESULT result, const char* code, const char* file, int line)
 {
     if (FAILED(result)) {
 
@@ -226,12 +226,16 @@ static void TIF(HRESULT result)
         char errA[256];
         size_t returnSize;
         wcstombs_s(&returnSize, errA, 255, errorMessage, 255);
+        
+        LogDebug("TIF FAILURE at %s:%d - Expression: %s, HRESULT=0x%08X, Message=%s", file, line, code, result, errA);
+
 #ifdef _DEBUG
         int32_t msgboxID = MessageBoxW(NULL, errorMessage, L"Error", MB_OK);
 #endif
         throw 1;
     }
 }
+#define TIF(x) TIF_impl(x, #x, __FILE__, __LINE__)
 
 // fix up format in case resource passed for UAV cannot be mapped
 static DXGI_FORMAT convertFormatUav(DXGI_FORMAT format)
@@ -931,6 +935,11 @@ FfxErrorCode CreateResourceDX11(
         dx11BufferDescription.ByteWidth = createResourceDescription->resourceDescription.width;
         dx11BufferDescription.Usage = D3D11_USAGE_DEFAULT;
         dx11BufferDescription.BindFlags = ffxGetDX11BindFlags(backendResource->resourceDescription.usage);
+        if (createResourceDescription->resourceDescription.format == FFX_SURFACE_FORMAT_UNKNOWN &&
+            createResourceDescription->resourceDescription.stride > 0) {
+            dx11BufferDescription.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+            dx11BufferDescription.StructureByteStride = createResourceDescription->resourceDescription.stride;
+        }
         break;
 
     case FFX_RESOURCE_TYPE_TEXTURE1D:
